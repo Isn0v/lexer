@@ -7,14 +7,20 @@ version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+
+    maven {
+        url file('mavenRepo')
+    }
 }
 
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
-    implementation files("src/main/resources/SysPro.TM.JVM.jar")
+    implementation 'group:SysPro.TM.JVM:1.0'
 }
+
+
 
 test {
     useJUnitPlatform()
