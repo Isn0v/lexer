@@ -1,4 +1,4 @@
-package nsu.syspro;
+package nsu.syspro.lexer;
 
 import syspro.tm.lexer.Keyword;
 import syspro.tm.lexer.Symbol;
@@ -11,7 +11,7 @@ public class Matchers {
         for (Keyword keyword : Keyword.values()) {
             int[] codePoints = keyword.text.codePoints().toArray();
             String checkedKeyword = new String(codePoints, 0, codePoints.length);
-            return checkedKeyword.equals(word);
+            if (checkedKeyword.equals(word)) return true;
         }
         return false;
     }

@@ -1,4 +1,4 @@
-package nsu.syspro;
+package nsu.syspro.lexer;
 
 import syspro.tm.lexer.BadToken;
 import syspro.tm.lexer.IndentationToken;
@@ -8,7 +8,7 @@ import syspro.tm.lexer.Token;
 import java.util.ArrayList;
 import java.util.List;
 
-import static nsu.syspro.Recognizer.*;
+import static nsu.syspro.lexer.Recognizer.*;
 
 public class MyLexer implements Lexer {
 

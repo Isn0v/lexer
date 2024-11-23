@@ -1,4 +1,4 @@
-package nsu.syspro;
+package nsu.syspro.lexer;
 
 import syspro.tm.lexer.*;
 
@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static javax.lang.model.SourceVersion.isIdentifier;
-import static nsu.syspro.Matchers.*;
+import static nsu.syspro.lexer.Matchers.*;
 
 public class Recognizer {
     public static int getWhitespacesLength(int pos, int end, ArrayList<Integer> codePoints) {
@@ -95,14 +95,6 @@ public class Recognizer {
             return new syspro.tm.lexer.SymbolToken(start, end, 0, 0, symbol);
         }
 
-        if (isIdentifier(word)) {
-            Keyword keyword = null;
-            if (isKeyword(word)) {
-                keyword = Keyword.valueOf(word.toUpperCase());
-            }
-            return new IdentifierToken(start, end, 0, 0, word, keyword);
-        }
-
         if (isBooleanLiteral(word)) {
             if (word.equals("true")) {
                 return new syspro.tm.lexer.BooleanLiteralToken(start, end, 0, 0, true);
@@ -121,7 +113,7 @@ public class Recognizer {
             String suffix = null;
 
             if (matcher.matches()) {
-                suffix = matcher.group(2); // Группа 2 соответствует суффиксу
+                suffix = matcher.group(2);
             }
 
             String valueString = word;
@@ -156,6 +148,14 @@ public class Recognizer {
             return new syspro.tm.lexer.StringLiteralToken(start, end, 0, 0, word);
         }
 
+        if (isIdentifier(word)) {
+            Keyword keyword = null;
+            if (isKeyword(word)) {
+                keyword = Keyword.valueOf(word.toUpperCase());
+            }
+            return new IdentifierToken(start, end, 0, 0, word, keyword);
+        }
+
         return new BadToken(start, end, 0, 0);
     }
 
@@ -163,14 +163,14 @@ public class Recognizer {
         if (end > border) return 0;
         int length = 0;
 
-        if (end - start + 1 == 1 && codePoints.get(end) == '\"') {//StringLiteral
+        if (end - start + 1 == 1 && codePoints.get(end) == '\"') {
             length = 1;
             end++;
             while (end < border && codePoints.get(end) != '\"') {
                 length++;
                 end++;
             }
-        } else if (end - start + 1 == 1 && codePoints.get(end) == '\'') {//Rune Literal
+        } else if (end - start + 1 == 1 && codePoints.get(end) == '\'') {
             length = 1;
             end++;
             while (end < border && codePoints.get(end) != '\'') {
@@ -182,7 +182,6 @@ public class Recognizer {
         while (end <= border && !(Recognizer.recognize(start, end, codePoints) instanceof BadToken)) {
             length++;
             end++;
-            //1 - число 1u плохой токен 1u64 -число - значит надо подглядывать вперёд
             if (end + 2 <= border && Recognizer.recognize(start, end, codePoints) instanceof BadToken) {
                 if (!(Recognizer.recognize(start, end + 2, codePoints) instanceof BadToken)) {
                     end += 2;
@@ -203,7 +202,6 @@ public class Recognizer {
     }
 
     public static ResultIndentation lexIndentation(int end, int border, int levelIndentation, int lengthIndentation, ArrayList<Integer> codePoints) {
-        // сдвигаем end тк есть NEWLINE
         end += getNewLineLength(end, border, codePoints);
 
         int newLineLength = getNewLineLength(end, border, codePoints);
