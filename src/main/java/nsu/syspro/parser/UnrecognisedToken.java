@@ -2,9 +2,9 @@ package nsu.syspro.parser;
 
 import syspro.tm.parser.ErrorCode;
 
-public class MyErrorCode implements ErrorCode {
+public class UnrecognisedToken implements ErrorCode {
     @Override
     public String name() {
-        return "";
+        return "UnrecognisedToken";
     }
 }
