@@ -1,10 +1,7 @@
 package nsu.syspro.parser;
 
-import syspro.tm.lexer.Keyword;
-import syspro.tm.lexer.Symbol;
 import syspro.tm.lexer.Token;
 import syspro.tm.parser.AnySyntaxKind;
-import syspro.tm.parser.SyntaxKind;
 import syspro.tm.parser.SyntaxNode;
 
 import java.util.List;
@@ -23,15 +20,15 @@ public class MySyntaxNode implements SyntaxNode {
         this.relatedToken = relatedToken;
     }
 
+    public MySyntaxNode(AnySyntaxKind kind) {
+        this(kind, null);
+    }
+
     public void addChild(SyntaxNode child) {
         if (syntaxNodes == null) {
             syntaxNodes = new java.util.ArrayList<>();
         }
         syntaxNodes.add(child);
-    }
-
-    public MySyntaxNode(AnySyntaxKind kind) {
-        this(kind, null);
     }
 
     @Override

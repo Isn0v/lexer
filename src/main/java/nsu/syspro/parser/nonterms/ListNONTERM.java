@@ -7,6 +7,7 @@ public class ListNONTERM implements AnySyntaxKind {
     final boolean allowEmpty;
     final AnySyntaxKind extendedKind;
     int accumulatedLength;
+
     public ListNONTERM(boolean allowEmpty, AnySyntaxKind extendedKind) {
         this.allowEmpty = allowEmpty;
         this.extendedKind = extendedKind;

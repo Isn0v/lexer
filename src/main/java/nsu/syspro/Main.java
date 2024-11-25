@@ -2,10 +2,6 @@ package nsu.syspro;
 
 
 import nsu.syspro.lexer.MyLexer;
-import syspro.tm.Tasks;
-import syspro.tm.lexer.Token;
-
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
