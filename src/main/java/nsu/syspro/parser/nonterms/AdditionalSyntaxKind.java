@@ -69,7 +69,9 @@ public enum AdditionalSyntaxKind implements AnySyntaxKind {
 
     PRIMARY_WITHOUT_MEMBER_ACCESS_EXPRESSION,
     PRIMARY_WITHOUT_INVOCATION_EXPRESSION,
-    PRIMARY_WITHOUT_INDEX_EXPRESSION
+    PRIMARY_WITHOUT_INDEX_EXPRESSION,
 
-
+    // Generative non-terminals
+    OR,
+    QUESTION
 }
