@@ -3,10 +3,19 @@ package nsu.syspro;
 
 import nsu.syspro.lexer.MyLexer;
 import syspro.tm.Tasks;
+import syspro.tm.lexer.Token;
+
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        Tasks.Lexer.registerSolution(new MyLexer());
+        String code = """
+                class Indent1\r
+                    def notMultipleOf2(): Boolean\r
+                        return true""";
+
+        new MyLexer().lex(code).forEach(System.out::println);
+//        Tasks.Lexer.registerSolution(new MyLexer());
 //        Grammatic.getRules().get(SyntaxKind.SOURCE_TEXT).forEach(System.out::println);
     }
 }
