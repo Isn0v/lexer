@@ -1,6 +1,7 @@
 package nsu.syspro.parser.nonterms;
 
 import syspro.tm.parser.AnySyntaxKind;
+import syspro.tm.parser.SyntaxKind;
 
 public class ListNONTERM implements AnySyntaxKind {
     final boolean allowEmpty;
@@ -34,5 +35,9 @@ public class ListNONTERM implements AnySyntaxKind {
             return true;
         }
         return false;
+    }
+
+    public AnySyntaxKind kind() {
+        return SyntaxKind.LIST;
     }
 }

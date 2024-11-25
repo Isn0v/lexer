@@ -12,4 +12,8 @@ public class QuestionNONTERM implements AnySyntaxKind {
     public AnySyntaxKind getExtendedKind() {
         return extendedKind;
     }
+
+    public AnySyntaxKind kind() {
+        return AdditionalSyntaxKind.QUESTION;
+    }
 }

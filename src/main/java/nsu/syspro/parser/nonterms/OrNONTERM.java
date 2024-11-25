@@ -14,4 +14,8 @@ public class OrNONTERM implements AnySyntaxKind {
     public List<AnySyntaxKind> getPossibleKinds() {
         return possibleKinds;
     }
+
+    public AnySyntaxKind kind() {
+        return AdditionalSyntaxKind.OR;
+    }
 }
