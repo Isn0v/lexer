@@ -13,24 +13,25 @@ public class MySyntaxNode implements SyntaxNode {
 
     private final AnySyntaxKind kind;
     // null if kind is non-terminal
-    private final Token relatedToken;
-    // Grammar rule terminals or non-terminals containing from API (because they are properly parsed),
+    Token relatedToken;
+    // Grammar rule terminals or non-terminals,
     // wrapped in SyntaxNode
-    private final List<SyntaxNode> syntaxNodes;
+    private List<SyntaxNode> syntaxNodes;
 
-    public MySyntaxNode(AnySyntaxKind kind, Token relatedToken, List<SyntaxNode> syntaxNodes) {
-        assert relatedToken == null || isAPISyntaxKind(kind);
+    public MySyntaxNode(AnySyntaxKind kind, Token relatedToken) {
         this.kind = kind;
         this.relatedToken = relatedToken;
-        this.syntaxNodes = syntaxNodes;
     }
 
-    public MySyntaxNode(AnySyntaxKind kind, List<SyntaxNode> syntaxNodes) {
-        this(kind, null, syntaxNodes);
+    public void addChild(SyntaxNode child) {
+        if (syntaxNodes == null) {
+            syntaxNodes = new java.util.ArrayList<>();
+        }
+        syntaxNodes.add(child);
     }
 
-    public static boolean isAPISyntaxKind(AnySyntaxKind kind) {
-        return kind instanceof SyntaxKind || kind instanceof Keyword || kind instanceof Symbol;
+    public MySyntaxNode(AnySyntaxKind kind) {
+        this(kind, null);
     }
 
     @Override

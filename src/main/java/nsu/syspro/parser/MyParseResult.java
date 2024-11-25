@@ -7,16 +7,17 @@ import syspro.tm.parser.TextSpan;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class MyParseResult implements ParseResult {
 
     private final SyntaxNode root;
-    ArrayList<TextSpan> invalidRanges = new ArrayList<>();
-    ArrayList<Diagnostic> diagnostics = new ArrayList<>();
+    ArrayList<TextSpan> invalidRanges;
+    ArrayList<Diagnostic> diagnostics;
 
-    public MyParseResult(SyntaxNode root) {
+    public MyParseResult(SyntaxNode root, ArrayList<TextSpan> invalidRanges, ArrayList<Diagnostic> diagnostics) {
         this.root = root;
+        this.invalidRanges = invalidRanges;
+        this.diagnostics = diagnostics;
     }
 
     @Override
