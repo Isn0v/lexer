@@ -41,4 +41,9 @@ public class ListNONTERM implements AnySyntaxKind {
     public AnySyntaxKind kind() {
         return SyntaxKind.LIST;
     }
+
+    @Override
+    public boolean isTerminal() {
+        return false;
+    }
 }

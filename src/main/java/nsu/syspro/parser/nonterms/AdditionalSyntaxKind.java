@@ -73,5 +73,10 @@ public enum AdditionalSyntaxKind implements AnySyntaxKind {
 
     // Generative non-terminals
     OR,
-    QUESTION
+    QUESTION;
+
+    @Override
+    public boolean isTerminal() {
+        return false;
+    }
 }

@@ -13,8 +13,7 @@ public class MyParser implements Parser {
     private int currentPosition = 0;
 
     boolean isTerminal(AnySyntaxKind kind) {
-        return ((OrNONTERM) Grammar.getRules().get(AdditionalSyntaxKind.TERMINAL).getFirst())
-                .getPossibleKinds().contains(kind);
+        return kind.isTerminal();
     }
 
 

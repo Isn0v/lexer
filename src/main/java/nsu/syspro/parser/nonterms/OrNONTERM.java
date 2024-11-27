@@ -18,4 +18,9 @@ public class OrNONTERM implements AnySyntaxKind {
     public AnySyntaxKind kind() {
         return AdditionalSyntaxKind.OR;
     }
+
+    @Override
+    public boolean isTerminal() {
+        return false;
+    }
 }
