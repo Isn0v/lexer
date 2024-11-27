@@ -78,13 +78,11 @@ public class MyParser implements Parser {
 
         if (!first.contains(tokenKind)) {
             // TODO: code duplication
-            int tokenStart = token.start, length = token.end - tokenStart;
 
-            TextSpan span = new TextSpan(tokenStart, length);
-            invalidRanges.add(span);
+            invalidRanges.add(token.fullSpan());
 
             DiagnosticInfo info = new DiagnosticInfo(new UnrecognisedToken(), new Object[]{token});
-            diagnostics.add(new Diagnostic(info, span, null));
+            diagnostics.add(new Diagnostic(info, token.fullSpan(), null));
             currentPosition++;
         }
 
@@ -98,13 +96,10 @@ public class MyParser implements Parser {
                 boolean result = parseOR(tokens, diagnostics, invalidRanges, currentNode);
                 if (!result) {
                     // TODO: code duplication
-                    int tokenStart = token.start, length = token.end - tokenStart;
-
-                    TextSpan span = new TextSpan(tokenStart, length);
-                    invalidRanges.add(span);
+                    invalidRanges.add(token.fullSpan());
 
                     DiagnosticInfo info = new DiagnosticInfo(new UnrecognisedToken(), new Object[]{token});
-                    diagnostics.add(new Diagnostic(info, span, null));
+                    diagnostics.add(new Diagnostic(info, token.fullSpan(), null));
                     currentPosition++;
                 }
             }
