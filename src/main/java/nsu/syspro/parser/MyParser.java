@@ -19,25 +19,37 @@ public class MyParser implements Parser {
 
 
     void calculateFirst(AnySyntaxKind kind, List<AnySyntaxKind> result) {
-        AnySyntaxKind term = Grammar.getRules().get(kind).getFirst();
-        assert term != null;
-
-        if (term == AdditionalSyntaxKind.TERMINAL || isTerminal(term)) {
-            result.add(term);
+        if (kind == AdditionalSyntaxKind.TERMINAL || isTerminal(kind)) {
+            result.add(kind);
             return;
         }
 
-        switch (term) {
-            case OrNONTERM orNONTERM -> {
-                for (AnySyntaxKind possibleKind : orNONTERM.getPossibleKinds()) {
-                    calculateFirst(possibleKind, result);
-                }
+        List<AnySyntaxKind> terms = Grammar.getRules().get(kind);
+
+        int i = 0;
+        while (i < terms.size() &&
+                (terms.get(i) instanceof ListNONTERM || terms.get(i) instanceof QuestionNONTERM)) {
+            AnySyntaxKind extendedTerm = terms.get(i);
+
+            if (extendedTerm instanceof ListNONTERM) {
+                extendedTerm = ((ListNONTERM) extendedTerm).getExtendedKind();
+            } else if (extendedTerm instanceof QuestionNONTERM) {
+                extendedTerm = ((QuestionNONTERM) extendedTerm).getExtendedKind();
             }
-            case ListNONTERM listNONTERM -> calculateFirst(listNONTERM.getExtendedKind(), result);
-            case QuestionNONTERM questionNONTERM -> calculateFirst(questionNONTERM.getExtendedKind(), result);
-            default -> calculateFirst(term, result);
+
+            calculateFirst(extendedTerm, result);
+            i++;
         }
 
+        AnySyntaxKind lastTerm = terms.get(i);
+        if (lastTerm instanceof OrNONTERM) {
+            List<AnySyntaxKind> orTerms = ((OrNONTERM) lastTerm).getPossibleKinds();
+            for (AnySyntaxKind orTerm : orTerms) {
+                calculateFirst(orTerm, result);
+            }
+        } else {
+            calculateFirst(lastTerm, result);
+        }
     }
 
 
