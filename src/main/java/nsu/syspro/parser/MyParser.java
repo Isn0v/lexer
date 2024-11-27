@@ -86,7 +86,7 @@ public class MyParser implements Parser {
             currentPosition++;
         }
 
-        if (isTerminal(currentKind) && matchSyntaxKind(tokens, currentKind)) {
+        if (isTerminal(currentKind) && matchSyntaxKind(token, currentKind)) {
             currentNode.relatedToken = token;
             currentPosition++;
             return;
@@ -142,13 +142,13 @@ public class MyParser implements Parser {
                     parseRecursive(tokens, diagnostics, invalidRanges,
                             (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
                     keepRecognising = true;
-                } else if (isTerminal(currentKind) && matchSyntaxKind(tokens, currentKind)) {
+                } else if (isTerminal(currentKind) && matchSyntaxKind(tokens.get(currentPosition), currentKind)) {
                     currentNode.relatedToken = tokens.get(currentPosition++);
                     keepRecognising = true;
                 } else {
                     break;
                 }
-            } else if (isTerminal(tokenKind) && matchSyntaxKind(tokens, separatorKind)) {
+            } else if (isTerminal(tokenKind) && matchSyntaxKind(tokens.get(currentPosition), separatorKind)) {
                 currentNode.relatedToken = tokens.get(currentPosition++);
                 keepRecognising = true;
             } else {
@@ -179,7 +179,7 @@ public class MyParser implements Parser {
             currentNode.addChild(new MySyntaxNode(currentKind));
             parseRecursive(tokens, diagnostics, invalidRanges,
                     (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
-        } else if (isTerminal(currentKind) && matchSyntaxKind(tokens, currentKind)) {
+        } else if (isTerminal(currentKind) && matchSyntaxKind(tokens.get(currentPosition), currentKind)) {
             currentNode.relatedToken = tokens.get(currentPosition++);
         }
     }
@@ -203,7 +203,7 @@ public class MyParser implements Parser {
                 parseRecursive(tokens, diagnostics, invalidRanges,
                         (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
                 keepRecognising = true;
-            } else if (isTerminal(currentKind) && matchSyntaxKind(tokens, currentKind)) {
+            } else if (isTerminal(currentKind) && matchSyntaxKind(tokens.get(currentPosition), currentKind)) {
                 currentNode.relatedToken = tokens.get(currentPosition++);
                 keepRecognising = true;
             }
@@ -220,7 +220,7 @@ public class MyParser implements Parser {
             List<AnySyntaxKind> first = new ArrayList<>();
             calculateFirst(possibleKind, first);
 
-            if (isTerminal(possibleKind) && matchSyntaxKind(tokens, possibleKind)) {
+            if (isTerminal(possibleKind) && matchSyntaxKind(tokens.get(currentPosition), possibleKind)) {
                 currentNode.relatedToken = tokens.get(currentPosition++);
                 return true;
             } else if (first.contains(tokenKind)) {
@@ -233,8 +233,8 @@ public class MyParser implements Parser {
         return false;
     }
 
-    boolean matchSyntaxKind(List<Token> tokens, AnySyntaxKind currentKind) {
-        AnySyntaxKind tokenKind = tokens.get(currentPosition).toSyntaxKind();
-        return tokenKind == currentKind;
+    boolean matchSyntaxKind(Token token, AnySyntaxKind currentKind) {
+
+        return token.toSyntaxKind() == currentKind;
     }
 }
