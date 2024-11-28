@@ -2,6 +2,11 @@ package nsu.syspro;
 
 
 import nsu.syspro.lexer.MyLexer;
+import nsu.syspro.parser.MyParser;
+import nsu.syspro.parser.nonterms.AdditionalSyntaxKind;
+import syspro.tm.Tasks;
+import syspro.tm.WebServer;
+import syspro.tm.parser.SyntaxKind;
 
 public class Main {
     public static void main(String[] args) {
@@ -10,8 +15,10 @@ public class Main {
                     def notMultipleOf2(): Boolean\r
                         return true""";
 
-        new MyLexer().lex(code).forEach(System.out::println);
-//        Tasks.Lexer.registerSolution(new MyLexer());
-//        Grammatic.getRules().get(SyntaxKind.SOURCE_TEXT).forEach(System.out::println);
+        MyParser parser = new MyParser();
+        parser.parse(code);
+//        Tasks.Parser.registerSolution(parser);
+//        WebServer.start();
+//        WebServer.waitForWebServerExit();
     }
 }
