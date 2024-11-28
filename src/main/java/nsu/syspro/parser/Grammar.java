@@ -23,7 +23,8 @@ public record Grammar() {
         // Definitions
         // TYPE_DEFINITION := Terminal IDENTIFIER LESS_THAN? SEPARATED_LIST[TYPE_PARAMETER_DEFINITION, COMMA]?
         //                    GREATER_THAN? TYPE_BOUND? INDENT? LIST[Definition]? DEDENT?
-        rules.put(SyntaxKind.TYPE_DEFINITION, List.of(AdditionalSyntaxKind.TERMINAL,
+        rules.put(SyntaxKind.TYPE_DEFINITION, List.of(
+                new ListNONTERM(new OrNONTERM(List.of(Keyword.CLASS, Keyword.OBJECT, Keyword.INTERFACE))),
                 SyntaxKind.IDENTIFIER,
                 new QuestionNONTERM(Symbol.LESS_THAN),
                 new QuestionNONTERM(new SeparatedListNONTERM(SyntaxKind.TYPE_PARAMETER_DEFINITION, Symbol.COMMA)),
@@ -35,7 +36,10 @@ public record Grammar() {
         // FUNCTION_DEFINITION := LIST[Terminal] DEF Terminal OPEN_PAREN SEPARATED_LIST[PARAMETER_DEFINITION, COMMA]?
         //                        CLOSE_PAREN COLON? NameExpression? INDENT? LIST[Statement]? DEDENT?
         rules.put(SyntaxKind.FUNCTION_DEFINITION,
-                List.of(new ListNONTERM(AdditionalSyntaxKind.TERMINAL),
+                List.of(
+                        new ListNONTERM(
+                                new OrNONTERM(List.of(Keyword.ABSTRACT, Keyword.OVERRIDE,
+                                        Keyword.NATIVE, Keyword.VIRTUAL))),
                         Keyword.DEF,
                         AdditionalSyntaxKind.TERMINAL,
                         Symbol.OPEN_PAREN,
@@ -687,6 +691,22 @@ public record Grammar() {
                         SyntaxKind.INDEX_EXPRESSION,
                         AdditionalSyntaxKind.SIMPLE_PRIMARY))));
 
+        // NameExpression
+
+        // IDENTIFIER_NAME_EXPRESSION := IDENTIFIER
+        rules.put(SyntaxKind.IDENTIFIER_NAME_EXPRESSION,
+                List.of(SyntaxKind.IDENTIFIER));
+        // OPTION_NAME_EXPRESSION := QUESTION NameExpression
+        rules.put(SyntaxKind.OPTION_NAME_EXPRESSION,
+                List.of(Symbol.QUESTION,
+                        AdditionalSyntaxKind.NAME_EXPRESSION));
+        // GENERIC_NAME_EXPRESSION := IDENTIFIER LESS_THAN SEPARATED_LIST[NameExpression, COMMA] GREATER_THAN
+        rules.put(SyntaxKind.GENERIC_NAME_EXPRESSION,
+                List.of(SyntaxKind.IDENTIFIER,
+                        Symbol.LESS_THAN,
+                        new SeparatedListNONTERM(AdditionalSyntaxKind.NAME_EXPRESSION,
+                                Symbol.COMMA),
+                        Symbol.GREATER_THAN));
     }
 
     public static HashMap<AnySyntaxKind, List<AnySyntaxKind>> getRules() {
