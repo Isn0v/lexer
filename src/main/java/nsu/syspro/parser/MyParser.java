@@ -5,6 +5,8 @@ import nsu.syspro.parser.nonterms.ListNONTERM;
 import nsu.syspro.parser.nonterms.OrNONTERM;
 import nsu.syspro.parser.nonterms.QuestionNONTERM;
 import nsu.syspro.parser.nonterms.SeparatedListNONTERM;
+import syspro.tm.lexer.Keyword;
+import syspro.tm.lexer.Symbol;
 import syspro.tm.lexer.Token;
 import syspro.tm.parser.*;
 
@@ -63,6 +65,33 @@ public class MyParser implements Parser {
         calculateFirst(terms.get(i), result);
     }
 
+    boolean isAPIKind(AnySyntaxKind kind) {
+        return kind instanceof SyntaxKind || kind instanceof Keyword || kind instanceof Symbol;
+    }
+
+
+    List<SyntaxNode> postProcessParsingTree(List<SyntaxNode> currentNodes) {
+        if (currentNodes == null) return null;
+
+        List<SyntaxNode> result = new ArrayList<>();
+        for (SyntaxNode currentNode : currentNodes) {
+            MySyntaxNode myCurrentNode = (MySyntaxNode) currentNode;
+
+            if (isAPIKind(currentNode.kind())) {
+                result.add(currentNode);
+                myCurrentNode.syntaxNodes = postProcessParsingTree(myCurrentNode.syntaxNodes);
+
+            } else {
+
+                List<SyntaxNode> children = postProcessParsingTree(myCurrentNode.syntaxNodes);
+                if (children != null) {
+                    result.addAll(postProcessParsingTree(myCurrentNode.syntaxNodes));
+                }
+            }
+        }
+        return result;
+    }
+
 
     @Override
     public ParseResult parse(String code) {
@@ -74,6 +103,7 @@ public class MyParser implements Parser {
         MySyntaxNode root = new MySyntaxNode(SyntaxKind.SOURCE_TEXT);
 
         parseRecursive(tokens, diagnostics, invalidRanges, root);
+        root.syntaxNodes = postProcessParsingTree(root.syntaxNodes);
 
         return new MyParseResult(root, invalidRanges, diagnostics);
     }
@@ -106,7 +136,7 @@ public class MyParser implements Parser {
             currentPosition++;
             return;
         } else if (isTerminal(currentKind) && matchSyntaxKind(token, currentKind)) {
-            currentNode.addChild(new MySyntaxNode(currentKind, token));
+            currentNode.relatedToken = token;
             currentPosition++;
             return;
         } else if (isTerminal(currentKind)) {
@@ -158,18 +188,18 @@ public class MyParser implements Parser {
             }
             AnySyntaxKind tokenKind = tokens.get(currentPosition).toSyntaxKind();
 
-            AnySyntaxKind currentKind = ((SeparatedListNONTERM) currentNode.kind()).getExtendedKind();
+            AnySyntaxKind extendedKind = ((SeparatedListNONTERM) currentNode.kind()).getExtendedKind();
             AnySyntaxKind separatorKind = ((SeparatedListNONTERM) currentNode.kind()).getSeparator();
 
             List<AnySyntaxKind> first = new ArrayList<>();
-            calculateFirst(currentKind, first);
+            calculateFirst(extendedKind, first);
 
             if (counter % 2 == 0) {
-                if (isTerminal(currentKind) && matchSyntaxKind(tokens.get(currentPosition), currentKind)) {
-                    currentNode.addChild(new MySyntaxNode(currentKind, tokens.get(currentPosition++)));
+                if (isTerminal(extendedKind) && matchSyntaxKind(tokens.get(currentPosition), extendedKind)) {
+                    currentNode.addChild(new MySyntaxNode(extendedKind, tokens.get(currentPosition++)));
                     keepRecognising = true;
                 } else if (first.contains(tokenKind)) {
-                    currentNode.addChild(new MySyntaxNode(currentKind));
+                    currentNode.addChild(new MySyntaxNode(extendedKind));
                     parseRecursive(tokens, diagnostics, invalidRanges, (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
                     keepRecognising = true;
                 } else {
