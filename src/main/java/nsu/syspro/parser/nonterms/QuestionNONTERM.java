@@ -13,10 +13,6 @@ public class QuestionNONTERM implements AnySyntaxKind {
         return extendedKind;
     }
 
-    public AnySyntaxKind kind() {
-        return AdditionalSyntaxKind.QUESTION;
-    }
-
     @Override
     public boolean isTerminal() {
         return false;

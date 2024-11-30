@@ -13,7 +13,7 @@ public class MySyntaxNode implements SyntaxNode {
     Token relatedToken;
     // Grammar rule terminals or non-terminals,
     // wrapped in SyntaxNode
-    private List<SyntaxNode> syntaxNodes;
+    List<SyntaxNode> syntaxNodes;
 
     public MySyntaxNode(AnySyntaxKind kind, Token relatedToken) {
         this.kind = kind;
