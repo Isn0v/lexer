@@ -87,18 +87,23 @@ public record Grammar() {
                 AdditionalSyntaxKind.MEMBER_BLOCK
         ));
 
-        // FUNCTION_DEFINITION := (ABSTRACT | VIRTUAL | OVERRIDE | NATIVE) 'DEF'
-        // (IDENTIFIER | 'THIS') '(' (PARAM PARAM_WITH_COMMA* )? ')' COLON_TYPE_NAME? STATEMENT_BLOCK
+        // FUNCTION_DEFINITION := (ABSTRACT | VIRTUAL | OVERRIDE | NATIVE)* 'DEF'
+        // (IDENTIFIER | 'THIS') '(' PARAM_PARAM_WITH_COMMA? ')' COLON_TYPE_NAME? STATEMENT_BLOCK
         rules.put(SyntaxKind.FUNCTION_DEFINITION, List.of(
-                new OrNONTERM(List.of(Keyword.ABSTRACT, Keyword.VIRTUAL, Keyword.OVERRIDE, Keyword.NATIVE)),
+                new ListNONTERM(new OrNONTERM(List.of(Keyword.ABSTRACT, Keyword.VIRTUAL, Keyword.OVERRIDE, Keyword.NATIVE))),
                 Keyword.DEF,
                 new OrNONTERM(List.of(SyntaxKind.IDENTIFIER, Keyword.THIS)),
                 Symbol.OPEN_PAREN,
-                AdditionalSyntaxKind.PARAM,
-                new ListNONTERM(AdditionalSyntaxKind.PARAM_WITH_COMMA),
+                new QuestionNONTERM(AdditionalSyntaxKind.PARAM_PARAM_WITH_COMMA),
                 Symbol.CLOSE_PAREN,
                 new QuestionNONTERM(AdditionalSyntaxKind.COLON_TYPE_NAME),
                 AdditionalSyntaxKind.STATEMENT_BLOCK
+        ));
+
+        // PARAM_PARAM_WITH_COMMA := PARAM PARAM_WITH_COMMA*
+        rules.put(AdditionalSyntaxKind.PARAM_PARAM_WITH_COMMA, List.of(
+                AdditionalSyntaxKind.PARAM,
+                new ListNONTERM(AdditionalSyntaxKind.PARAM_WITH_COMMA)
         ));
 
         // VARIABLE_DEFINITION := ('VAR' | 'VAL') IDENTIFIER COLON_TYPE_NAME? ASSIGN?
@@ -288,11 +293,11 @@ public record Grammar() {
         // Expression
         // EXPRESSION := (PRIMARY | UNARY_EXPRESSION) EXPRESSION_HATCH?
         rules.put(AdditionalSyntaxKind.EXPRESSION, List.of(
-            new OrNONTERM(List.of(
-                AdditionalSyntaxKind.PRIMARY,
-                AdditionalSyntaxKind.UNARY_EXPRESSION
-            )),
-            new QuestionNONTERM(AdditionalSyntaxKind.EXPRESSION_HATCH)
+                new OrNONTERM(List.of(
+                        AdditionalSyntaxKind.PRIMARY,
+                        AdditionalSyntaxKind.UNARY_EXPRESSION
+                )),
+                new QuestionNONTERM(AdditionalSyntaxKind.EXPRESSION_HATCH)
         ));
 
         // UNARY_EXPRESSION := (! | - | + | ~) EXPRESSION

@@ -4,9 +4,6 @@ import nsu.syspro.lexer.MyLexer;
 import nsu.syspro.parser.nonterms.ListNONTERM;
 import nsu.syspro.parser.nonterms.OrNONTERM;
 import nsu.syspro.parser.nonterms.QuestionNONTERM;
-import nsu.syspro.parser.nonterms.SeparatedListNONTERM;
-import syspro.tm.lexer.Keyword;
-import syspro.tm.lexer.Symbol;
 import syspro.tm.lexer.Token;
 import syspro.tm.parser.*;
 
@@ -20,7 +17,6 @@ public class MyParser implements Parser {
     boolean isTerminal(AnySyntaxKind kind) {
         return kind.isTerminal();
     }
-
 
     void calculateFirst(AnySyntaxKind kind, List<AnySyntaxKind> result) {
         if (kind instanceof ListNONTERM) {
@@ -65,8 +61,8 @@ public class MyParser implements Parser {
         calculateFirst(terms.get(i), result);
     }
 
-    boolean isAPIKind(AnySyntaxKind kind) {
-        return kind instanceof SyntaxKind || kind instanceof Keyword || kind instanceof Symbol;
+    boolean isGenerativeKind(AnySyntaxKind kind) {
+        return kind instanceof OrNONTERM || kind instanceof QuestionNONTERM || kind instanceof ListNONTERM;
     }
 
 
@@ -77,12 +73,10 @@ public class MyParser implements Parser {
         for (SyntaxNode currentNode : currentNodes) {
             MySyntaxNode myCurrentNode = (MySyntaxNode) currentNode;
 
-            if (isAPIKind(currentNode.kind())) {
+            if (!isGenerativeKind(currentNode.kind())) {
                 result.add(currentNode);
                 myCurrentNode.syntaxNodes = postProcessParsingTree(myCurrentNode.syntaxNodes);
-
             } else {
-
                 List<SyntaxNode> children = postProcessParsingTree(myCurrentNode.syntaxNodes);
                 if (children != null) {
                     result.addAll(postProcessParsingTree(myCurrentNode.syntaxNodes));
@@ -161,7 +155,6 @@ public class MyParser implements Parser {
                     currentPosition++;
                 }
             }
-            case SeparatedListNONTERM _ -> parseSeparatedList(tokens, diagnostics, invalidRanges, currentNode);
             case ListNONTERM _ -> parseList(tokens, diagnostics, invalidRanges, currentNode);
             case QuestionNONTERM _ -> parseQuestion(tokens, diagnostics, invalidRanges, currentNode);
             default -> {
@@ -175,52 +168,6 @@ public class MyParser implements Parser {
         }
 
 
-    }
-
-    void parseSeparatedList(List<Token> tokens, ArrayList<Diagnostic> diagnostics, ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode) {
-
-        boolean keepRecognising = true;
-        int counter = 0;
-        while (keepRecognising) {
-            keepRecognising = false;
-            if (currentPosition >= tokens.size()) {
-                break;
-            }
-            AnySyntaxKind tokenKind = tokens.get(currentPosition).toSyntaxKind();
-
-            AnySyntaxKind extendedKind = ((SeparatedListNONTERM) currentNode.kind()).getExtendedKind();
-            AnySyntaxKind separatorKind = ((SeparatedListNONTERM) currentNode.kind()).getSeparator();
-
-            List<AnySyntaxKind> first = new ArrayList<>();
-            calculateFirst(extendedKind, first);
-
-            if (counter % 2 == 0) {
-                if (isTerminal(extendedKind) && matchSyntaxKind(tokens.get(currentPosition), extendedKind)) {
-                    currentNode.addChild(new MySyntaxNode(extendedKind, tokens.get(currentPosition++)));
-                    keepRecognising = true;
-                } else if (first.contains(tokenKind)) {
-                    currentNode.addChild(new MySyntaxNode(extendedKind));
-                    parseRecursive(tokens, diagnostics, invalidRanges, (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
-                    keepRecognising = true;
-                } else {
-                    break;
-                }
-            } else if (isTerminal(tokenKind) && matchSyntaxKind(tokens.get(currentPosition), separatorKind)) {
-                currentNode.addChild(new MySyntaxNode(separatorKind, tokens.get(currentPosition++)));
-                keepRecognising = true;
-            } else {
-                Token token = tokens.get(currentPosition);
-                int tokenStart = token.start, length = token.end - tokenStart;
-
-                TextSpan span = new TextSpan(tokenStart, length);
-                invalidRanges.add(span);
-
-                DiagnosticInfo info = new DiagnosticInfo(new WrongSeparator(), new Object[]{token});
-                diagnostics.add(new Diagnostic(info, span, null));
-                currentPosition++;
-            }
-            counter++;
-        }
     }
 
     void parseQuestion(List<Token> tokens, ArrayList<Diagnostic> diagnostics, ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode) {
