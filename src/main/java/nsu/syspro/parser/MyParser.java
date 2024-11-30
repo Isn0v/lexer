@@ -66,7 +66,7 @@ public class MyParser implements Parser {
     }
 
 
-    List<SyntaxNode> postProcessParsingTree(List<SyntaxNode> currentNodes) {
+    List<SyntaxNode> removeGenerativeNonTerms(List<SyntaxNode> currentNodes) {
         if (currentNodes == null) return null;
 
         List<SyntaxNode> result = new ArrayList<>();
@@ -75,11 +75,11 @@ public class MyParser implements Parser {
 
             if (!isGenerativeKind(currentNode.kind())) {
                 result.add(currentNode);
-                myCurrentNode.syntaxNodes = postProcessParsingTree(myCurrentNode.syntaxNodes);
+                myCurrentNode.syntaxNodes = removeGenerativeNonTerms(myCurrentNode.syntaxNodes);
             } else {
-                List<SyntaxNode> children = postProcessParsingTree(myCurrentNode.syntaxNodes);
+                List<SyntaxNode> children = removeGenerativeNonTerms(myCurrentNode.syntaxNodes);
                 if (children != null) {
-                    result.addAll(postProcessParsingTree(myCurrentNode.syntaxNodes));
+                    result.addAll(removeGenerativeNonTerms(myCurrentNode.syntaxNodes));
                 }
             }
         }
@@ -97,7 +97,7 @@ public class MyParser implements Parser {
         MySyntaxNode root = new MySyntaxNode(SyntaxKind.SOURCE_TEXT);
 
         parseRecursive(tokens, diagnostics, invalidRanges, root);
-        root.syntaxNodes = postProcessParsingTree(root.syntaxNodes);
+        root.syntaxNodes = removeGenerativeNonTerms(root.syntaxNodes);
 
         return new MyParseResult(root, invalidRanges, diagnostics);
     }
