@@ -52,14 +52,14 @@ public enum AdditionalSyntaxKind implements AnySyntaxKind {
         return false;
     }
 
-    boolean isRemovable(AdditionalSyntaxKind kind) {
-        return kind.ordinal() >= NAME_GENERIC.ordinal() &&
-                kind.ordinal() <= TYPE_NAME_COMMA.ordinal();
+    public boolean isRemovable() {
+        return this.ordinal() >= NAME_GENERIC.ordinal() &&
+                this.ordinal() <= TYPE_NAME_COMMA.ordinal();
     }
 
-    boolean isListNonTerminal(AdditionalSyntaxKind kind) {
-        return kind.ordinal() >= SEPARATED_LIST_PARAM_COMMA.ordinal() &&
-                kind.ordinal() <= LIST_TYPE_DEFINITION.ordinal();
+    public boolean isListNonTerminal() {
+        return this.ordinal() >= SEPARATED_LIST_PARAM_COMMA.ordinal() &&
+                this.ordinal() <= LIST_TYPE_DEFINITION.ordinal();
     }
 
     public static final HashMap<AnySyntaxKind, AnySyntaxKind> additionalListToApiList = new HashMap<>();

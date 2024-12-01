@@ -1,6 +1,7 @@
 package nsu.syspro.parser;
 
 import nsu.syspro.lexer.MyLexer;
+import nsu.syspro.parser.nonterms.AdditionalSyntaxKind;
 import nsu.syspro.parser.nonterms.ListNONTERM;
 import nsu.syspro.parser.nonterms.OrNONTERM;
 import nsu.syspro.parser.nonterms.QuestionNONTERM;
@@ -68,21 +69,30 @@ public class MyParser implements Parser {
     }
 
 
-    List<SyntaxNode> removeGenerativeNonTerms(List<SyntaxNode> currentNodes) {
+    List<SyntaxNode> postProcessParsingTree(List<SyntaxNode> currentNodes) {
         if (currentNodes == null) return null;
 
         List<SyntaxNode> result = new ArrayList<>();
         for (SyntaxNode currentNode : currentNodes) {
             MySyntaxNode myCurrentNode = (MySyntaxNode) currentNode;
+            AnySyntaxKind currentKind = currentNode.kind();
 
-            if (!isGenerativeKind(currentNode.kind())) {
-                result.add(currentNode);
-                myCurrentNode.syntaxNodes = removeGenerativeNonTerms(myCurrentNode.syntaxNodes);
-            } else {
-                List<SyntaxNode> children = removeGenerativeNonTerms(myCurrentNode.syntaxNodes);
+            if (isGenerativeKind(currentKind) ||
+                    (currentKind instanceof AdditionalSyntaxKind && ((AdditionalSyntaxKind) currentKind).isRemovable())
+            ) {
+                List<SyntaxNode> children = postProcessParsingTree(myCurrentNode.syntaxNodes);
                 if (children != null) {
-                    result.addAll(removeGenerativeNonTerms(myCurrentNode.syntaxNodes));
+                    result.addAll(postProcessParsingTree(myCurrentNode.syntaxNodes));
                 }
+            } else if  (currentKind instanceof AdditionalSyntaxKind && ((AdditionalSyntaxKind) currentKind).isListNonTerminal()){
+                List<SyntaxNode> children = postProcessParsingTree(myCurrentNode.syntaxNodes);
+
+                MySyntaxNode node = new MySyntaxNode(AdditionalSyntaxKind.additionalListToApiList.get(currentKind));
+                node.addChildren(children);
+                result.add(node);
+            } else {
+                result.add(currentNode);
+                myCurrentNode.syntaxNodes = postProcessParsingTree(myCurrentNode.syntaxNodes);
             }
         }
         return result;
@@ -99,7 +109,7 @@ public class MyParser implements Parser {
         MySyntaxNode root = new MySyntaxNode(SyntaxKind.SOURCE_TEXT);
 
         parseRecursive(tokens, diagnostics, invalidRanges, root, Grammar.rules);
-        root.syntaxNodes = removeGenerativeNonTerms(root.syntaxNodes);
+        root.syntaxNodes = postProcessParsingTree(root.syntaxNodes);
 
         return new MyParseResult(root, invalidRanges, diagnostics);
     }
