@@ -8,6 +8,7 @@ import syspro.tm.lexer.Token;
 import syspro.tm.parser.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class MyParser implements Parser {
@@ -18,19 +19,20 @@ public class MyParser implements Parser {
         return kind.isTerminal();
     }
 
-    void calculateFirst(AnySyntaxKind kind, List<AnySyntaxKind> result) {
+    void calculateFirst(AnySyntaxKind kind, List<AnySyntaxKind> result,
+                        HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules) {
         if (kind instanceof ListNONTERM) {
             kind = ((ListNONTERM) kind).getExtendedKind();
-            calculateFirst(kind, result);
+            calculateFirst(kind, result, rules);
             return;
         } else if (kind instanceof QuestionNONTERM) {
             kind = ((QuestionNONTERM) kind).getExtendedKind();
-            calculateFirst(kind, result);
+            calculateFirst(kind, result, rules);
             return;
         } else if (kind instanceof OrNONTERM) {
             List<AnySyntaxKind> orTerms = ((OrNONTERM) kind).getPossibleKinds();
             for (AnySyntaxKind orTerm : orTerms) {
-                calculateFirst(orTerm, result);
+                calculateFirst(orTerm, result, rules);
             }
             return;
         }
@@ -41,7 +43,7 @@ public class MyParser implements Parser {
             return;
         }
 
-        List<AnySyntaxKind> terms = Grammar.getRules().get(kind);
+        List<AnySyntaxKind> terms = rules.get(kind);
 
         int i = 0;
         while (i < terms.size() && (terms.get(i) instanceof ListNONTERM || terms.get(i) instanceof QuestionNONTERM)) {
@@ -53,12 +55,12 @@ public class MyParser implements Parser {
                 extendedTerm = ((QuestionNONTERM) extendedTerm).getExtendedKind();
             }
 
-            calculateFirst(extendedTerm, result);
+            calculateFirst(extendedTerm, result, rules);
             i++;
         }
 
         if (i == terms.size()) return;
-        calculateFirst(terms.get(i), result);
+        calculateFirst(terms.get(i), result, rules);
     }
 
     boolean isGenerativeKind(AnySyntaxKind kind) {
@@ -96,14 +98,15 @@ public class MyParser implements Parser {
         ArrayList<TextSpan> invalidRanges = new ArrayList<>();
         MySyntaxNode root = new MySyntaxNode(SyntaxKind.SOURCE_TEXT);
 
-        parseRecursive(tokens, diagnostics, invalidRanges, root);
+        parseRecursive(tokens, diagnostics, invalidRanges, root, Grammar.getRules());
         root.syntaxNodes = removeGenerativeNonTerms(root.syntaxNodes);
 
         return new MyParseResult(root, invalidRanges, diagnostics);
     }
 
 
-    void parseRecursive(List<Token> tokens, ArrayList<Diagnostic> diagnostics, ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode) {
+    void parseRecursive(List<Token> tokens, ArrayList<Diagnostic> diagnostics, ArrayList<TextSpan> invalidRanges,
+                        MySyntaxNode currentNode, HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules) {
         if (currentPosition >= tokens.size()) {
             return;
         }
@@ -113,7 +116,7 @@ public class MyParser implements Parser {
         AnySyntaxKind currentKind = currentNode.kind();
 
         List<AnySyntaxKind> first = new ArrayList<>();
-        calculateFirst(currentKind, first);
+        calculateFirst(currentKind, first, rules);
 
         if (!first.contains(tokenKind) &&
                 (currentKind instanceof QuestionNONTERM || currentKind instanceof ListNONTERM)) {
@@ -145,7 +148,7 @@ public class MyParser implements Parser {
         }
         switch (currentKind) {
             case OrNONTERM _ -> {
-                boolean result = parseOR(tokens, diagnostics, invalidRanges, currentNode);
+                boolean result = parseOR(tokens, diagnostics, invalidRanges, currentNode, rules);
                 if (!result) {
                     // TODO: code duplication
                     invalidRanges.add(token.fullSpan());
@@ -155,14 +158,16 @@ public class MyParser implements Parser {
                     currentPosition++;
                 }
             }
-            case ListNONTERM _ -> parseList(tokens, diagnostics, invalidRanges, currentNode);
-            case QuestionNONTERM _ -> parseQuestion(tokens, diagnostics, invalidRanges, currentNode);
+            case ListNONTERM _ -> parseList(tokens, diagnostics, invalidRanges, currentNode, rules);
+            case QuestionNONTERM _ -> parseQuestion(tokens, diagnostics, invalidRanges, currentNode, rules);
             default -> {
-                List<AnySyntaxKind> rule = Grammar.getRules().get(currentKind);
+                List<AnySyntaxKind> rule = rules.get(currentKind);
 
                 for (AnySyntaxKind kind : rule) {
                     currentNode.addChild(new MySyntaxNode(kind));
-                    parseRecursive(tokens, diagnostics, invalidRanges, (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
+                    parseRecursive(tokens, diagnostics, invalidRanges,
+                            (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1),
+                            rules);
                 }
             }
         }
@@ -170,7 +175,9 @@ public class MyParser implements Parser {
 
     }
 
-    void parseQuestion(List<Token> tokens, ArrayList<Diagnostic> diagnostics, ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode) {
+    void parseQuestion(List<Token> tokens, ArrayList<Diagnostic> diagnostics,
+                       ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode,
+                       HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules) {
         if (currentPosition >= tokens.size()) {
             return;
         }
@@ -178,17 +185,21 @@ public class MyParser implements Parser {
         AnySyntaxKind currentKind = ((QuestionNONTERM) currentNode.kind()).getExtendedKind();
 
         List<AnySyntaxKind> first = new ArrayList<>();
-        calculateFirst(currentKind, first);
+        calculateFirst(currentKind, first, rules);
 
         if (isTerminal(currentKind) && matchSyntaxKind(tokens.get(currentPosition), currentKind)) {
             currentNode.addChild(new MySyntaxNode(currentKind, tokens.get(currentPosition++)));
         } else if (first.contains(tokenKind)) {
             currentNode.addChild(new MySyntaxNode(currentKind));
-            parseRecursive(tokens, diagnostics, invalidRanges, (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
+            parseRecursive(tokens, diagnostics, invalidRanges,
+                    (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1),
+                    rules);
         }
     }
 
-    void parseList(List<Token> tokens, ArrayList<Diagnostic> diagnostics, ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode) {
+    void parseList(List<Token> tokens, ArrayList<Diagnostic> diagnostics,
+                   ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode,
+                   HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules) {
         boolean keepRecognising = true;
         while (keepRecognising) {
             keepRecognising = false;
@@ -200,21 +211,25 @@ public class MyParser implements Parser {
             AnySyntaxKind currentKind = ((ListNONTERM) currentNode.kind()).getExtendedKind();
 
             List<AnySyntaxKind> first = new ArrayList<>();
-            calculateFirst(currentKind, first);
+            calculateFirst(currentKind, first, rules);
 
             if (isTerminal(currentKind) && matchSyntaxKind(tokens.get(currentPosition), currentKind)) {
                 currentNode.addChild(new MySyntaxNode(currentKind, tokens.get(currentPosition++)));
                 keepRecognising = true;
             } else if (first.contains(tokenKind)) {
                 currentNode.addChild(new MySyntaxNode(currentKind));
-                parseRecursive(tokens, diagnostics, invalidRanges, (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
+                parseRecursive(tokens, diagnostics, invalidRanges,
+                        (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1),
+                        rules);
                 keepRecognising = true;
             }
         }
     }
 
 
-    boolean parseOR(List<Token> tokens, ArrayList<Diagnostic> diagnostics, ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode) {
+    boolean parseOR(List<Token> tokens, ArrayList<Diagnostic> diagnostics,
+                    ArrayList<TextSpan> invalidRanges, MySyntaxNode currentNode,
+                    HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules) {
         if (currentPosition >= tokens.size()) {
             return false;
         }
@@ -223,14 +238,16 @@ public class MyParser implements Parser {
 
         for (AnySyntaxKind possibleKind : currentKind.getPossibleKinds()) {
             List<AnySyntaxKind> first = new ArrayList<>();
-            calculateFirst(possibleKind, first);
+            calculateFirst(possibleKind, first, rules);
 
             if (isTerminal(possibleKind) && matchSyntaxKind(tokens.get(currentPosition), possibleKind)) {
                 currentNode.addChild(new MySyntaxNode(possibleKind, tokens.get(currentPosition++)));
                 return true;
             } else if (first.contains(tokenKind)) {
                 currentNode.addChild(new MySyntaxNode(possibleKind));
-                parseRecursive(tokens, diagnostics, invalidRanges, (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1));
+                parseRecursive(tokens, diagnostics, invalidRanges,
+                        (MySyntaxNode) currentNode.slot(currentNode.slotCount() - 1),
+                        rules);
                 return true;
             }
         }
