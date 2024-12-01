@@ -10,15 +10,15 @@ import syspro.tm.parser.SyntaxKind;
 
 public class Main {
     public static void main(String[] args) {
-        String code = """
-                class Indent1\r
-                    def notMultipleOf2(): Boolean\r
-                        return true""";
-
-        MyParser parser = new MyParser();
-        parser.parse(code);
+//        String code = """
+//                class Indent1\r
+//                    def notMultipleOf2(): Boolean\r
+//                        return true""";
+//
+//        MyParser parser = new MyParser();
+//        parser.parse(code);
 //        Tasks.Parser.registerSolution(parser);
-//        WebServer.start();
-//        WebServer.waitForWebServerExit();
+        WebServer.start();
+        WebServer.waitForWebServerExit();
     }
 }
