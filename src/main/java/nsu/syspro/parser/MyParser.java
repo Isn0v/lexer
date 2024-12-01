@@ -97,7 +97,43 @@ public class MyParser implements Parser {
                 MySyntaxNode node = new MySyntaxNode(boolean_literal);
                 node.addChild(new MySyntaxNode(currentNode.kind(), currentNode.token()));
                 result.add(node);
-            } else {
+            }
+            else if (currentKind == AdditionalSyntaxKind.PRIMARY){
+                SyntaxNode atom = myCurrentNode.syntaxNodes.getFirst();
+                ArrayList<SyntaxNode> processedAtom = (ArrayList<SyntaxNode>) postProcessParsingTree(List.of(atom));
+
+                // always ListNONTERM according to Grammar
+                MySyntaxNode listNonTerm = (MySyntaxNode) myCurrentNode.syntaxNodes.get(1);
+
+                List<SyntaxNode> tail = listNonTerm.syntaxNodes;
+                if (tail == null) {
+                    result.addAll(processedAtom);
+                    continue;
+                }
+                for (SyntaxNode node : tail) {
+                    // node is always OrNONTERM according to Grammar, and always has single child,
+                    // which is DOT_EXPRESSION, PARENTHESIZED_LIST_EXPRESSION or INDEX_EXPRESSION
+                    assert node.slotCount() == 1 : "slotCount != 1";
+                    MySyntaxNode myNode = (MySyntaxNode) node.slot(0);
+
+                    AnySyntaxKind kindToExtend = switch (myNode.kind()){
+                        case AdditionalSyntaxKind.DOT_EXPRESSION -> SyntaxKind.MEMBER_ACCESS_EXPRESSION;
+                        case AdditionalSyntaxKind.PARENTHESIZED_LIST_EXPRESSION -> SyntaxKind.INVOCATION_EXPRESSION;
+                        case AdditionalSyntaxKind.INDEX_EXPRESSION -> SyntaxKind.INDEX_EXPRESSION;
+                        default -> throw new RuntimeException("Unknown node kind: " + myNode.kind());
+                    };
+
+                    List<SyntaxNode> processedNode = postProcessParsingTree(List.of(myNode));
+                    processedAtom.addAll(processedNode);
+
+                    MySyntaxNode extendedNode = new MySyntaxNode(kindToExtend);
+                    extendedNode.addChildren(processedAtom);
+
+                    processedAtom = new ArrayList<>(List.of(extendedNode));
+                }
+                result.add(processedAtom.getFirst());
+            }
+            else {
                 result.add(currentNode);
                 myCurrentNode.syntaxNodes = postProcessParsingTree(myCurrentNode.syntaxNodes);
             }
