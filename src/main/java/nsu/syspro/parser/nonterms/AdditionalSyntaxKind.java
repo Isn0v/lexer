@@ -6,7 +6,7 @@ import syspro.tm.parser.SyntaxKind;
 import java.util.HashMap;
 
 public enum AdditionalSyntaxKind implements AnySyntaxKind {
-    // Post processed
+    // Post processed (not removable)
     TYPE_NAME,
     EXPRESSION,
     PRIMARY,
@@ -62,16 +62,18 @@ public enum AdditionalSyntaxKind implements AnySyntaxKind {
                 kind.ordinal() <= LIST_TYPE_DEFINITION.ordinal();
     }
 
-    public final HashMap<AnySyntaxKind, AnySyntaxKind> additionalListToApiList = new HashMap<>() {{
-        put(SEPARATED_LIST_PARAM_COMMA, SyntaxKind.SEPARATED_LIST);
-        put(SEPARATED_LIST_TYPE_NAME_AMPERSAND, SyntaxKind.SEPARATED_LIST);
-        put(SEPARATED_LIST_TYPE_PARAM_COMMA, SyntaxKind.SEPARATED_LIST);
-        put(SEPARATED_LIST_EXPRESSION_COMMA, SyntaxKind.SEPARATED_LIST);
-        put(SEPARATED_LIST_TYPE_NAME_COMMA, SyntaxKind.SEPARATED_LIST);
+    public static final HashMap<AnySyntaxKind, AnySyntaxKind> additionalListToApiList = new HashMap<>();
 
-        put(LIST_MEMBER_DEF, SyntaxKind.LIST);
-        put(LIST_STATEMENT, SyntaxKind.LIST);
-        put(LIST_TERMINAL, SyntaxKind.LIST);
-        put(LIST_TYPE_DEFINITION, SyntaxKind.LIST);
-    }};
+    static {
+        additionalListToApiList.put(SEPARATED_LIST_PARAM_COMMA, SyntaxKind.SEPARATED_LIST);
+        additionalListToApiList.put(SEPARATED_LIST_TYPE_NAME_AMPERSAND, SyntaxKind.SEPARATED_LIST);
+        additionalListToApiList.put(SEPARATED_LIST_TYPE_PARAM_COMMA, SyntaxKind.SEPARATED_LIST);
+        additionalListToApiList.put(SEPARATED_LIST_EXPRESSION_COMMA, SyntaxKind.SEPARATED_LIST);
+        additionalListToApiList.put(SEPARATED_LIST_TYPE_NAME_COMMA, SyntaxKind.SEPARATED_LIST);
+
+        additionalListToApiList.put(LIST_MEMBER_DEF, SyntaxKind.LIST);
+        additionalListToApiList.put(LIST_STATEMENT, SyntaxKind.LIST);
+        additionalListToApiList.put(LIST_TERMINAL, SyntaxKind.LIST);
+        additionalListToApiList.put(LIST_TYPE_DEFINITION, SyntaxKind.LIST);
+    }
 }

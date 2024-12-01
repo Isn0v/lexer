@@ -14,16 +14,16 @@ import java.util.List;
 
 public record Grammar() {
 
-    public static HashMap<AnySyntaxKind, List<AnySyntaxKind>> getRules() {
-        return rules;
-    }
 
+    public final static HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules = new HashMap<>();
 
-    private final static HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules = new HashMap<>() {{
+    static {
 
         // Root
         // SOURCE_TEXT := LIST_TYPE_DEFINITION
-        rules.put(SyntaxKind.SOURCE_TEXT, List.of(AdditionalSyntaxKind.LIST_TYPE_DEFINITION));
+        rules.put(SyntaxKind.SOURCE_TEXT, List.of(
+                new QuestionNONTERM(AdditionalSyntaxKind.LIST_TYPE_DEFINITION, true)
+        ));
 
         // LIST_TYPE_DEFINITION := TYPE_DEFINITION*
         rules.put(AdditionalSyntaxKind.LIST_TYPE_DEFINITION, List.of(
@@ -120,7 +120,7 @@ public record Grammar() {
         // FUNCTION_DEFINITION := LIST_TERMINAL 'DEF'
         // (IDENTIFIER | 'THIS') '(' SEPARATED_LIST_PARAM_COMMA? ')' COLON_TYPE_NAME? STATEMENT_BLOCK
         rules.put(SyntaxKind.FUNCTION_DEFINITION, List.of(
-                AdditionalSyntaxKind.LIST_TERMINAL,
+                new QuestionNONTERM(AdditionalSyntaxKind.LIST_TERMINAL, true),
                 Keyword.DEF,
                 new OrNONTERM(List.of(SyntaxKind.IDENTIFIER, Keyword.THIS)),
                 Symbol.OPEN_PAREN,
@@ -412,7 +412,9 @@ public record Grammar() {
                 new QuestionNONTERM(SyntaxKind.IDENTIFIER)
         ));
         // ----------------------------------------------------------------------------------------------------------------
-    }};
+
+
+    }
 
 
 }
