@@ -14,12 +14,21 @@ import java.util.List;
 
 public record Grammar() {
 
-    private final static HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules = new HashMap<>();
+    public static HashMap<AnySyntaxKind, List<AnySyntaxKind>> getRules() {
+        return rules;
+    }
 
-    static {
+
+    private final static HashMap<AnySyntaxKind, List<AnySyntaxKind>> rules = new HashMap<>() {{
+
         // Root
-        // SOURCE_TEXT := TYPE_DEFINITION*
-        rules.put(SyntaxKind.SOURCE_TEXT, List.of(new ListNONTERM(SyntaxKind.TYPE_DEFINITION)));
+        // SOURCE_TEXT := LIST_TYPE_DEFINITION
+        rules.put(SyntaxKind.SOURCE_TEXT, List.of(AdditionalSyntaxKind.LIST_TYPE_DEFINITION));
+
+        // LIST_TYPE_DEFINITION := TYPE_DEFINITION*
+        rules.put(AdditionalSyntaxKind.LIST_TYPE_DEFINITION, List.of(
+                new ListNONTERM(SyntaxKind.TYPE_DEFINITION)
+        ));
         // ----------------------------------------------------------------------------------------------------------------
 
         // Type name
@@ -29,10 +38,21 @@ public record Grammar() {
                 new QuestionNONTERM(AdditionalSyntaxKind.NAME_GENERIC)
         ));
 
-        // NAME_GENERIC := '<' TYPE_NAME (',' TYPE_NAME)* '>'
+        // NAME_GENERIC := '<' SEPARATED_LIST_TYPE_NAME_COMMA '>'
         rules.put(AdditionalSyntaxKind.NAME_GENERIC, List.of(
-                Symbol.LESS_THAN, AdditionalSyntaxKind.TYPE_NAME,
-                new ListNONTERM(AdditionalSyntaxKind.TYPE_NAME), Symbol.GREATER_THAN
+                Symbol.LESS_THAN, AdditionalSyntaxKind.SEPARATED_LIST_TYPE_NAME_COMMA, Symbol.GREATER_THAN
+        ));
+
+
+        // SEPARATED_LIST_TYPE_NAME_COMMA := TYPE_NAME TYPE_NAME_COMMA*
+        rules.put(AdditionalSyntaxKind.SEPARATED_LIST_TYPE_NAME_COMMA, List.of(
+                AdditionalSyntaxKind.TYPE_NAME,
+                new ListNONTERM(AdditionalSyntaxKind.TYPE_NAME_COMMA)
+        ));
+
+        // TYPE_NAME_COMMA := ',' TYPE_NAME
+        rules.put(AdditionalSyntaxKind.TYPE_NAME_COMMA, List.of(
+                Symbol.COMMA, AdditionalSyntaxKind.TYPE_NAME
         ));
         // ----------------------------------------------------------------------------------------------------------------
 
@@ -40,19 +60,29 @@ public record Grammar() {
         // MEMBER_BLOCK := INNER_MEMBER_BLOCK?
         rules.put(AdditionalSyntaxKind.MEMBER_BLOCK,
                 List.of(new QuestionNONTERM(AdditionalSyntaxKind.INNER_MEMBER_BLOCK)));
-        // INNER_MEMBER_BLOCK := INDENT MEMBER_DEF MEMBER_DEF* DEDENT
+        // INNER_MEMBER_BLOCK := INDENT LIST_MEMBER_DEF DEDENT
         rules.put(AdditionalSyntaxKind.INNER_MEMBER_BLOCK, List.of(
-                SyntaxKind.INDENT, AdditionalSyntaxKind.MEMBER_DEF,
-                new ListNONTERM(AdditionalSyntaxKind.MEMBER_DEF), SyntaxKind.DEDENT
+                SyntaxKind.INDENT, AdditionalSyntaxKind.LIST_MEMBER_DEF, SyntaxKind.DEDENT
+        ));
+
+        // LIST_MEMBER_DEF := MEMBER_DEF MEMBER_DEF*
+        rules.put(AdditionalSyntaxKind.LIST_MEMBER_DEF, List.of(
+                AdditionalSyntaxKind.MEMBER_DEF,
+                new ListNONTERM(AdditionalSyntaxKind.MEMBER_DEF)
         ));
 
         // STATEMENT_BLOCK := INNER_STATEMENT_BLOCK?
         rules.put(AdditionalSyntaxKind.STATEMENT_BLOCK,
                 List.of(new QuestionNONTERM(AdditionalSyntaxKind.INNER_STATEMENT_BLOCK)));
-        // INNER_STATEMENT_BLOCK := INDENT STATEMENT STATEMENT* DEDENT
+        // INNER_STATEMENT_BLOCK := INDENT LIST_STATEMENT DEDENT
         rules.put(AdditionalSyntaxKind.INNER_STATEMENT_BLOCK, List.of(
-                SyntaxKind.INDENT, AdditionalSyntaxKind.STATEMENT,
-                new ListNONTERM(AdditionalSyntaxKind.STATEMENT), SyntaxKind.DEDENT
+                SyntaxKind.INDENT, AdditionalSyntaxKind.LIST_STATEMENT, SyntaxKind.DEDENT
+        ));
+
+        // LIST_STATEMENT := STATEMENT STATEMENT*
+        rules.put(AdditionalSyntaxKind.LIST_STATEMENT, List.of(
+                AdditionalSyntaxKind.STATEMENT,
+                new ListNONTERM(AdditionalSyntaxKind.STATEMENT)
         ));
 
         // MEMBER_DEF := VARIABLE_DEF | FUNCTION_DEF
@@ -87,22 +117,27 @@ public record Grammar() {
                 AdditionalSyntaxKind.MEMBER_BLOCK
         ));
 
-        // FUNCTION_DEFINITION := (ABSTRACT | VIRTUAL | OVERRIDE | NATIVE)* 'DEF'
-        // (IDENTIFIER | 'THIS') '(' PARAM_PARAM_WITH_COMMA? ')' COLON_TYPE_NAME? STATEMENT_BLOCK
+        // FUNCTION_DEFINITION := LIST_TERMINAL 'DEF'
+        // (IDENTIFIER | 'THIS') '(' SEPARATED_LIST_PARAM_COMMA? ')' COLON_TYPE_NAME? STATEMENT_BLOCK
         rules.put(SyntaxKind.FUNCTION_DEFINITION, List.of(
-                new ListNONTERM(new OrNONTERM(List.of(Keyword.ABSTRACT, Keyword.VIRTUAL, Keyword.OVERRIDE, Keyword.NATIVE))),
+                AdditionalSyntaxKind.LIST_TERMINAL,
                 Keyword.DEF,
                 new OrNONTERM(List.of(SyntaxKind.IDENTIFIER, Keyword.THIS)),
                 Symbol.OPEN_PAREN,
-                new QuestionNONTERM(AdditionalSyntaxKind.PARAM_PARAM_WITH_COMMA),
+                new QuestionNONTERM(AdditionalSyntaxKind.SEPARATED_LIST_PARAM_COMMA),
                 Symbol.CLOSE_PAREN,
                 new QuestionNONTERM(AdditionalSyntaxKind.COLON_TYPE_NAME),
                 AdditionalSyntaxKind.STATEMENT_BLOCK
         ));
 
-        // PARAM_PARAM_WITH_COMMA := PARAM PARAM_WITH_COMMA*
-        rules.put(AdditionalSyntaxKind.PARAM_PARAM_WITH_COMMA, List.of(
-                AdditionalSyntaxKind.PARAM,
+        // LIST_TERMINAL := (ABSTRACT | VIRTUAL | OVERRIDE | NATIVE)*
+        rules.put(AdditionalSyntaxKind.LIST_TERMINAL, List.of(
+                new ListNONTERM(new OrNONTERM(List.of(Keyword.ABSTRACT, Keyword.VIRTUAL, Keyword.OVERRIDE, Keyword.NATIVE)))
+        ));
+
+        // SEPARATED_LIST_PARAM_COMMA := PARAMETER_DEFINITION PARAM_WITH_COMMA*
+        rules.put(AdditionalSyntaxKind.SEPARATED_LIST_PARAM_COMMA, List.of(
+                SyntaxKind.PARAMETER_DEFINITION,
                 new ListNONTERM(AdditionalSyntaxKind.PARAM_WITH_COMMA)
         ));
 
@@ -115,33 +150,43 @@ public record Grammar() {
                 new QuestionNONTERM(AdditionalSyntaxKind.ASSIGN)
         ));
 
-        // TYPE_PARAMS := '<' TYPE_PARAM TYPE_PARAM_WITH_COMMA* '>'
+        // TYPE_PARAMS := '<' SEPARATED_LIST_TYPE_PARAM_COMMA '>'
         rules.put(AdditionalSyntaxKind.TYPE_PARAMS, List.of(
                 Symbol.LESS_THAN,
-                AdditionalSyntaxKind.TYPE_PARAM,
-                new ListNONTERM(AdditionalSyntaxKind.TYPE_PARAM_WITH_COMMA),
+                AdditionalSyntaxKind.SEPARATED_LIST_TYPE_PARAM_COMMA,
                 Symbol.GREATER_THAN
         ));
 
-        // TYPE_PARAM_WITH_COMMA := ',' TYPE_PARAM
-        rules.put(AdditionalSyntaxKind.TYPE_PARAM_WITH_COMMA, List.of(
-                Symbol.COMMA, AdditionalSyntaxKind.TYPE_PARAM
+        // SEPARATED_LIST_TYPE_PARAM_COMMA := TYPE_PARAMETER_DEFINITION TYPE_PARAM_WITH_COMMA*
+        rules.put(AdditionalSyntaxKind.SEPARATED_LIST_TYPE_PARAM_COMMA, List.of(
+                SyntaxKind.TYPE_PARAMETER_DEFINITION,
+                new ListNONTERM(AdditionalSyntaxKind.TYPE_PARAM_WITH_COMMA)
         ));
 
-        // TYPE_PARAM := IDENTIFIER TYPE_BOUND?
-        rules.put(AdditionalSyntaxKind.TYPE_PARAM, List.of(
+        // TYPE_PARAM_WITH_COMMA := ',' TYPE_PARAMETER_DEFINITION
+        rules.put(AdditionalSyntaxKind.TYPE_PARAM_WITH_COMMA, List.of(
+                Symbol.COMMA, SyntaxKind.TYPE_PARAMETER_DEFINITION
+        ));
+
+        // TYPE_PARAMETER_DEFINITION := IDENTIFIER TYPE_BOUND?
+        rules.put(SyntaxKind.TYPE_PARAMETER_DEFINITION, List.of(
                 SyntaxKind.IDENTIFIER,
                 new QuestionNONTERM(SyntaxKind.TYPE_BOUND)
         ));
 
-        // PARAM := IDENTIFIER ':' TYPE_NAME
-        rules.put(AdditionalSyntaxKind.PARAM, List.of(
+        // PARAMETER_DEFINITION := IDENTIFIER ':' TYPE_NAME
+        rules.put(SyntaxKind.PARAMETER_DEFINITION, List.of(
                 SyntaxKind.IDENTIFIER, Symbol.COLON, AdditionalSyntaxKind.TYPE_NAME
         ));
 
-        // TYPE_BOUND := '<:' TYPE_NAME TYPE_NAME_WITH_AMPERSAND*
+        // TYPE_BOUND := '<:' SEPARATED_LIST_TYPE_NAME_AMPERSAND
         rules.put(SyntaxKind.TYPE_BOUND, List.of(
-                Symbol.BOUND, AdditionalSyntaxKind.TYPE_NAME,
+                Symbol.BOUND, AdditionalSyntaxKind.SEPARATED_LIST_TYPE_NAME_AMPERSAND
+        ));
+
+        // SEPARATED_LIST_TYPE_NAME_AMPERSAND := TYPE_NAME TYPE_NAME_WITH_AMPERSAND*
+        rules.put(AdditionalSyntaxKind.SEPARATED_LIST_TYPE_NAME_AMPERSAND, List.of(
+                AdditionalSyntaxKind.TYPE_NAME,
                 new ListNONTERM(AdditionalSyntaxKind.TYPE_NAME_WITH_AMPERSAND)
         ));
 
@@ -160,9 +205,9 @@ public record Grammar() {
                 Symbol.AMPERSAND, AdditionalSyntaxKind.TYPE_NAME
         ));
 
-        // PARAM_WITH_COMMA := ',' PARAM
+        // PARAM_WITH_COMMA := ',' PARAMETER_DEFINITION
         rules.put(AdditionalSyntaxKind.PARAM_WITH_COMMA, List.of(
-                Symbol.COMMA, AdditionalSyntaxKind.PARAM
+                Symbol.COMMA, SyntaxKind.PARAMETER_DEFINITION
         ));
         // ----------------------------------------------------------------------------------------------------------------
 
@@ -238,13 +283,13 @@ public record Grammar() {
         // ----------------------------------------------------------------------------------------------------------------
 
         // Primary
-        // PRIMARY := ATOM ( DOT_EXPRESSION | PARENTHESIZED_EXPRESSION | INDEX_EXPRESSION )*
+        // PRIMARY := ATOM ( DOT_EXPRESSION | PARENTHESIZED_LIST_EXPRESSION | INDEX_EXPRESSION )*
         rules.put(AdditionalSyntaxKind.PRIMARY, List.of(
                 AdditionalSyntaxKind.ATOM,
                 new ListNONTERM(
                         new OrNONTERM(List.of(
                                 AdditionalSyntaxKind.DOT_EXPRESSION,
-                                AdditionalSyntaxKind.PARENTHESIZED_EXPRESSION,
+                                AdditionalSyntaxKind.PARENTHESIZED_LIST_EXPRESSION,
                                 AdditionalSyntaxKind.INDEX_EXPRESSION))
                 )
         ));
@@ -255,12 +300,17 @@ public record Grammar() {
                 SyntaxKind.IDENTIFIER
         ));
 
-        // PARENTHESIZED_EXPRESSION := '(' EXPRESSION EXPRESSION_WITH_COMMA* ')'
-        rules.put(AdditionalSyntaxKind.PARENTHESIZED_EXPRESSION, List.of(
+        // PARENTHESIZED_LIST_EXPRESSION := '(' SEPARATED_LIST_EXPRESSION_COMMA ')'
+        rules.put(AdditionalSyntaxKind.PARENTHESIZED_LIST_EXPRESSION, List.of(
                 Symbol.OPEN_PAREN,
-                AdditionalSyntaxKind.EXPRESSION,
-                new ListNONTERM(AdditionalSyntaxKind.EXPRESSION_WITH_COMMA),
+                AdditionalSyntaxKind.SEPARATED_LIST_EXPRESSION_COMMA,
                 Symbol.CLOSE_PAREN
+        ));
+
+        // SEPARATED_LIST_EXPRESSION_COMMA := EXPRESSION EXPRESSION_WITH_COMMA*
+        rules.put(AdditionalSyntaxKind.SEPARATED_LIST_EXPRESSION_COMMA, List.of(
+                AdditionalSyntaxKind.EXPRESSION,
+                new ListNONTERM(AdditionalSyntaxKind.EXPRESSION_WITH_COMMA)
         ));
 
         // INDEX_EXPRESSION := '[' EXPRESSION ']'
@@ -277,7 +327,7 @@ public record Grammar() {
         ));
 
         // ATOM := IDENTIFIER | 'THIS' | 'NULL' | TYPE_NAME | BOOLEAN |
-        // STRING | RUNE | INTEGER | '(' EXPRESSION ')'
+        // STRING | RUNE | INTEGER | PARENTHESIZED_EXPRESSION
         rules.put(AdditionalSyntaxKind.ATOM, List.of(new OrNONTERM(List.of(
                 SyntaxKind.IDENTIFIER,
                 Keyword.THIS,
@@ -286,8 +336,17 @@ public record Grammar() {
                 SyntaxKind.BOOLEAN,
                 SyntaxKind.STRING,
                 SyntaxKind.RUNE,
-                SyntaxKind.INTEGER
+                SyntaxKind.INTEGER,
+                SyntaxKind.PARENTHESIZED_EXPRESSION
         ))));
+
+        // PARENTHESIZED_EXPRESSION := '(' EXPRESSION ')'
+        rules.put(SyntaxKind.PARENTHESIZED_EXPRESSION, List.of(
+                Symbol.OPEN_PAREN,
+                AdditionalSyntaxKind.EXPRESSION,
+                Symbol.CLOSE_PAREN
+        ));
+
         // ----------------------------------------------------------------------------------------------------------------
 
         // Expression
@@ -311,10 +370,10 @@ public record Grammar() {
                 AdditionalSyntaxKind.EXPRESSION
         ));
 
-        // EXPRESSION_HATCH := BINARY_EXPRESSION_TAIL | IS_EXPRESSION
+        // EXPRESSION_HATCH := BINARY_EXPRESSION_TAIL* | IS_EXPRESSION
         rules.put(AdditionalSyntaxKind.EXPRESSION_HATCH, List.of(
                 new OrNONTERM(List.of(
-                        AdditionalSyntaxKind.BINARY_EXPRESSION_TAIL,
+                        new ListNONTERM(AdditionalSyntaxKind.BINARY_EXPRESSION_TAIL),
                         SyntaxKind.IS_EXPRESSION
                 )),
                 new QuestionNONTERM(SyntaxKind.IDENTIFIER)
@@ -346,16 +405,14 @@ public record Grammar() {
                 AdditionalSyntaxKind.EXPRESSION
         ));
 
-        // IS_EXPRESSION := 'IS' NAME_EXPRESSION IDENTIFIER?
+        // IS_EXPRESSION := 'IS' TYPE_NAME IDENTIFIER?
         rules.put(SyntaxKind.IS_EXPRESSION, List.of(
                 Keyword.IS,
-                AdditionalSyntaxKind.NAME_EXPRESSION,
+                AdditionalSyntaxKind.TYPE_NAME,
                 new QuestionNONTERM(SyntaxKind.IDENTIFIER)
         ));
         // ----------------------------------------------------------------------------------------------------------------
-    }
+    }};
 
-    public static HashMap<AnySyntaxKind, List<AnySyntaxKind>> getRules() {
-        return rules;
-    }
+
 }
