@@ -300,10 +300,10 @@ public record Grammar() {
                 SyntaxKind.IDENTIFIER
         ));
 
-        // PARENTHESIZED_LIST_EXPRESSION := '(' SEPARATED_LIST_EXPRESSION_COMMA ')'
+        // PARENTHESIZED_LIST_EXPRESSION := '(' SEPARATED_LIST_EXPRESSION_COMMA? ')'
         rules.put(AdditionalSyntaxKind.PARENTHESIZED_LIST_EXPRESSION, List.of(
                 Symbol.OPEN_PAREN,
-                AdditionalSyntaxKind.SEPARATED_LIST_EXPRESSION_COMMA,
+                new QuestionNONTERM(AdditionalSyntaxKind.SEPARATED_LIST_EXPRESSION_COMMA),
                 Symbol.CLOSE_PAREN
         ));
 
@@ -326,19 +326,51 @@ public record Grammar() {
                 AdditionalSyntaxKind.EXPRESSION
         ));
 
-        // ATOM := IDENTIFIER | 'THIS' | 'NULL' | TYPE_NAME | BOOLEAN |
-        // STRING | RUNE | INTEGER | PARENTHESIZED_EXPRESSION
+        // ATOM := IDENTIFIER | THIS_EXPRESSION | SUPER_EXPRESSION | NULL_LITERAL_EXPRESSION |
+        // TYPE_NAME | BOOLEAN |
+        // STRING_LITERAL_EXPRESSION | RUNE_LITERAL_EXPRESSION | INTEGER_LITERAL_EXPRESSION | PARENTHESIZED_EXPRESSION
         rules.put(AdditionalSyntaxKind.ATOM, List.of(new OrNONTERM(List.of(
                 SyntaxKind.IDENTIFIER,
-                Keyword.THIS,
-                Keyword.NULL,
+                SyntaxKind.THIS_EXPRESSION,
+                SyntaxKind.SUPER_EXPRESSION,
+                SyntaxKind.NULL_LITERAL_EXPRESSION,
                 AdditionalSyntaxKind.TYPE_NAME,
-                SyntaxKind.BOOLEAN,
-                SyntaxKind.STRING,
-                SyntaxKind.RUNE,
-                SyntaxKind.INTEGER,
+                SyntaxKind.BOOLEAN, // will be post processed to TRUE_LITERAL_EXPRESSION or FALSE_LITERAL_EXPRESSION
+                SyntaxKind.STRING_LITERAL_EXPRESSION,
+                SyntaxKind.RUNE_LITERAL_EXPRESSION,
+                SyntaxKind.INTEGER_LITERAL_EXPRESSION,
                 SyntaxKind.PARENTHESIZED_EXPRESSION
         ))));
+
+        // THIS_EXPRESSION := 'THIS'
+        rules.put(SyntaxKind.THIS_EXPRESSION, List.of(
+                Keyword.THIS
+        ));
+
+        // SUPER_EXPRESSION := 'SUPER'
+        rules.put(SyntaxKind.SUPER_EXPRESSION, List.of(
+                Keyword.SUPER
+        ));
+
+        // NULL_LITERAL_EXPRESSION := 'NULL'
+        rules.put(SyntaxKind.NULL_LITERAL_EXPRESSION, List.of(
+                Keyword.NULL
+        ));
+
+        // STRING_LITERAL_EXPRESSION := STRING_LITERAL
+        rules.put(SyntaxKind.STRING_LITERAL_EXPRESSION, List.of(
+                SyntaxKind.STRING
+        ));
+
+        // RUNE_LITERAL_EXPRESSION := RUNE_LITERAL
+        rules.put(SyntaxKind.RUNE_LITERAL_EXPRESSION, List.of(
+                SyntaxKind.RUNE
+        ));
+
+        // INTEGER_LITERAL_EXPRESSION := INTEGER_LITERAL
+        rules.put(SyntaxKind.INTEGER_LITERAL_EXPRESSION, List.of(
+                SyntaxKind.INTEGER
+        ));
 
         // PARENTHESIZED_EXPRESSION := '(' EXPRESSION ')'
         rules.put(SyntaxKind.PARENTHESIZED_EXPRESSION, List.of(
