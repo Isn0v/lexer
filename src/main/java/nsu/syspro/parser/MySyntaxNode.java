@@ -31,6 +31,14 @@ public class MySyntaxNode implements SyntaxNode {
         syntaxNodes.add(child);
     }
 
+    public void addChildren(List<SyntaxNode> children) {
+        if (syntaxNodes == null) {
+            syntaxNodes = new java.util.ArrayList<>();
+        }
+        if (children == null) return;
+        syntaxNodes.addAll(children);
+    }
+
     @Override
     public AnySyntaxKind kind() {
         return kind;
