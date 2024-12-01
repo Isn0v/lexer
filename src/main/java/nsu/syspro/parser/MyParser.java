@@ -6,6 +6,7 @@ import nsu.syspro.parser.nonterms.ListNONTERM;
 import nsu.syspro.parser.nonterms.OrNONTERM;
 import nsu.syspro.parser.nonterms.QuestionNONTERM;
 import syspro.tm.lexer.BooleanLiteralToken;
+import syspro.tm.lexer.Symbol;
 import syspro.tm.lexer.Token;
 import syspro.tm.parser.*;
 
@@ -132,6 +133,21 @@ public class MyParser implements Parser {
                     processedAtom = new ArrayList<>(List.of(extendedNode));
                 }
                 result.add(processedAtom.getFirst());
+            }
+            else if (currentKind == AdditionalSyntaxKind.TYPE_NAME){
+                ArrayList<SyntaxNode> processedTypeNameSyntaxNodes =
+                        new ArrayList<>(postProcessParsingTree(myCurrentNode.syntaxNodes));
+
+                AnySyntaxKind extendedKind = switch (processedTypeNameSyntaxNodes.getFirst().kind()){
+                    case Symbol.QUESTION -> SyntaxKind.OPTION_NAME_EXPRESSION;
+                    case SyntaxKind.IDENTIFIER -> processedTypeNameSyntaxNodes.size() > 1 ?
+                            SyntaxKind.GENERIC_NAME_EXPRESSION : SyntaxKind.IDENTIFIER_NAME_EXPRESSION;
+                    default -> throw new RuntimeException("Unknown node kind: " + processedTypeNameSyntaxNodes.getFirst().kind());
+                };
+
+                MySyntaxNode extendedNode = new MySyntaxNode(extendedKind);
+                extendedNode.addChildren(processedTypeNameSyntaxNodes);
+                result.add(extendedNode);
             }
             else {
                 result.add(currentNode);
