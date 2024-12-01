@@ -5,6 +5,7 @@ import nsu.syspro.parser.nonterms.AdditionalSyntaxKind;
 import nsu.syspro.parser.nonterms.ListNONTERM;
 import nsu.syspro.parser.nonterms.OrNONTERM;
 import nsu.syspro.parser.nonterms.QuestionNONTERM;
+import syspro.tm.lexer.BooleanLiteralToken;
 import syspro.tm.lexer.Token;
 import syspro.tm.parser.*;
 
@@ -82,13 +83,19 @@ public class MyParser implements Parser {
             ) {
                 List<SyntaxNode> children = postProcessParsingTree(myCurrentNode.syntaxNodes);
                 if (children != null) {
-                    result.addAll(postProcessParsingTree(myCurrentNode.syntaxNodes));
+                    result.addAll(children);
                 }
-            } else if  (currentKind instanceof AdditionalSyntaxKind && ((AdditionalSyntaxKind) currentKind).isListNonTerminal()){
+            } else if (currentKind instanceof AdditionalSyntaxKind && ((AdditionalSyntaxKind) currentKind).isListNonTerminal()) {
                 List<SyntaxNode> children = postProcessParsingTree(myCurrentNode.syntaxNodes);
 
                 MySyntaxNode node = new MySyntaxNode(AdditionalSyntaxKind.additionalListToApiList.get(currentKind));
                 node.addChildren(children);
+                result.add(node);
+            } else if (currentKind == SyntaxKind.BOOLEAN) {
+                boolean value = ((BooleanLiteralToken) currentNode.token()).value;
+                AnySyntaxKind boolean_literal = value ? SyntaxKind.TRUE_LITERAL_EXPRESSION : SyntaxKind.FALSE_LITERAL_EXPRESSION;
+                MySyntaxNode node = new MySyntaxNode(boolean_literal);
+                node.addChild(new MySyntaxNode(currentNode.kind(), currentNode.token()));
                 result.add(node);
             } else {
                 result.add(currentNode);
