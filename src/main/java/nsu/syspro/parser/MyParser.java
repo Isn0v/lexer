@@ -98,7 +98,7 @@ public class MyParser implements Parser {
         ArrayList<TextSpan> invalidRanges = new ArrayList<>();
         MySyntaxNode root = new MySyntaxNode(SyntaxKind.SOURCE_TEXT);
 
-        parseRecursive(tokens, diagnostics, invalidRanges, root, Grammar.getRules());
+        parseRecursive(tokens, diagnostics, invalidRanges, root, Grammar.rules);
         root.syntaxNodes = removeGenerativeNonTerms(root.syntaxNodes);
 
         return new MyParseResult(root, invalidRanges, diagnostics);
@@ -119,11 +119,17 @@ public class MyParser implements Parser {
         calculateFirst(currentKind, first, rules);
 
         if (!first.contains(tokenKind) &&
-                (currentKind instanceof QuestionNONTERM || currentKind instanceof ListNONTERM)) {
+                ((currentKind instanceof QuestionNONTERM && !((QuestionNONTERM) currentKind).saveInParsingTree)
+                        || currentKind instanceof ListNONTERM)) {
             return;
-        }
+        } else if (!first.contains(tokenKind) &&
+                (currentKind instanceof QuestionNONTERM && ((QuestionNONTERM) currentKind).saveInParsingTree)) {
+            currentNode.addChild(new MySyntaxNode(
+                    ((QuestionNONTERM) currentKind).getExtendedKind())
+            );
+            return;
 
-        if (!first.contains(tokenKind)) {
+        } else if (!first.contains(tokenKind)) {
             // TODO: code duplication
 
             invalidRanges.add(token.fullSpan());
